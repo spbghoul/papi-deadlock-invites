@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/* Classic Steam store / SteamDB palette. */
+@theme {
+  --color-ink-950: #0e141b;
+  --color-ink-900: #171a21;
+  --color-ink-850: #1b2838;
+  --color-ink-800: #16202d;
+  --color-ink-700: #2a475e;
+  --color-ink-600: #3d5a73;
+  --color-ink-500: #4b6680;
+  --color-ink-400: #8f98a0;
+  --color-ink-300: #acb2b8;
+  --color-bone: #c6d4df;
+
+  --color-accent-300: #b3e0fb;
+  --color-accent-400: #8ad0f8;
+  --color-accent-500: #66c0f4;
+
+  --color-buy-text: #d2efa9;
+  --color-online: #57cbde;
+  --color-moss-400: #90ba3c;
+  --color-blood-500: #d94b4b;
+  --color-blood-600: #a33a3a;
+
+  --font-sans: "Motiva Sans", Arial, Helvetica, sans-serif;
+  --font-mono: "Consolas", "Lucida Console", ui-monospace, monospace;
+}
+
+@layer base {
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-ink-850);
+  background-image: radial-gradient(ellipse 80% 420px at 50% 0, rgba(42, 71, 94, 0.95), rgba(27, 40, 56, 0) 100%);
+  background-repeat: no-repeat;
+  color: var(--color-bone);
+  font-size: 14px;
+}
+
+a {
+  color: var(--color-accent-500);
+}
+a:hover {
+  color: #fff;
+}
+}
+
+@layer components {
+/* Box used for most content, like Steam's game_area / SteamDB panels. */
+.panel {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border-radius: 3px;
+}
+
+/* Steam "purchase area" gradient. */
+.purchase-area {
+  background: linear-gradient(-60deg, rgba(226, 244, 255, 0.3) 5%, rgba(84, 107, 115, 0.3) 95%);
+  border-radius: 4px;
+}
+
+/* Section header with the blue fading underline. */
+.block-header {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-bottom: 4px;
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, #3b6e8c 0%, rgba(59, 110, 140, 0) 70%) 1;
+}
+
+/* Green "Add to cart" button. */
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 2px;
+  padding: 0 18px;
+  line-height: 32px;
+  font-size: 15px;
+  color: var(--color-buy-text);
+  background: linear-gradient(to right, #75b022 5%, #588a1b 95%);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-green:hover {
+  color: #fff;
+  background: linear-gradient(to right, #8ed629 5%, #6aa621 95%);
+}
+
+/* Blue secondary button (btnv6_blue_hoverfade). */
+.btn-blue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  padding: 0 15px;
+  line-height: 30px;
+  color: var(--color-accent-500);
+  background: rgba(103, 193, 245, 0.2);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-blue:hover:not(:disabled) {
+  color: #fff;
+  background: linear-gradient(-60deg, #417a9b 5%, #67c1f5 95%);
+}
+.btn-blue:disabled {
+  opacity: 0.5;
+}
+
+.field {
+  background: #101822;
+  border: 1px solid #000;
+  border-radius: 3px;
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.4);
+  color: var(--color-bone);
+  padding: 7px 10px;
+}
+.field::placeholder {
+  color: #4b5a68;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--color-accent-500);
+}
+
+}
+
+/* Scale the whole content column up on big monitors so it fills more of the screen.
+   The side gutters stay free (reserved for memes). */
+@media (min-width: 1440px) {
+  .site-col {
+    zoom: 1.12;
+  }
+}
+@media (min-width: 1800px) {
+  .site-col {
+    zoom: 1.22;
+  }
+}
+
+/* SteamDB-style zebra table rows. */
+.zebra > :nth-child(odd) {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

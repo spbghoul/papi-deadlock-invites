@@ -1,0 +1,63 @@
+services:
+  web:
+    build: .
+    image: papis-deadlock-invites:latest
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/data/app.db
+      TRUST_PROXY: "true"
+    volumes:
+      - app-data:/data
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      worker:
+        condition: service_started
+
+  worker:
+    image: papis-deadlock-invites:latest
+    build: .
+    init: true
+    restart: unless-stopped
+    command: ["node_modules/.bin/tsx", "src/worker/index.ts"]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/data/app.db
+      STEAM_TOKEN_FILE: /data/steam-refresh-token.txt
+    volumes:
+      - app-data:/data
+    stop_grace_period: 45s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # HTTPS reverse proxy. Start with: docker compose --profile tls up -d
+  caddy:
+    image: caddy:2.8
+    profiles: ["tls"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - web
+
+volumes:
+  app-data:
+  caddy-data:

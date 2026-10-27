@@ -1,0 +1,12 @@
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+data/
+.env
+.env.local
+coverage/
+
+# Local / machine-specific
+.claude/
+deploy/*.pub

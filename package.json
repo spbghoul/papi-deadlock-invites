@@ -1,0 +1,54 @@
+{
+  "name": "papis-deadlock-invites",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "worker": "tsx src/worker/index.ts",
+    "worker:dev": "tsx watch src/worker/index.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "steam:login": "tsx scripts/steam-login.ts",
+    "admin:hash-password": "tsx scripts/hash-password.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "cheerio": "^1.1.0",
+    "kysely": "^0.28.2",
+    "next": "^15.5.0",
+    "pg": "^8.16.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "steam-totp": "^2.1.2",
+    "steam-user": "^5.2.0",
+    "tsx": "^4.20.0",
+    "zod": "^4.6.7"
+  },
+  "overrides": {
+    "adm-zip": "^0.6.1",
+    "postcss": "$postcss",
+    "steam-appticket": {
+      "protobufjs": "^7.6.6"
+    }
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
