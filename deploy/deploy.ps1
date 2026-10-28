@@ -49,8 +49,18 @@ try {
   $setup = [IO.File]::ReadAllText((Join-Path $root 'deploy\setup-server.sh')).Replace("`r`n", "`n")
   [IO.File]::WriteAllText("$tmp\setup-server.sh", $setup, (New-Object Text.UTF8Encoding($false)))
 
+  # Build here (fast PC) instead of on the tiny server.
+  Write-Host '==> Building the site locally'
+  $env:NODE_ENV = 'production'
+  $env:NEXT_TELEMETRY_DISABLED = '1'
+  $node = Get-Command node -ErrorAction SilentlyContinue
+  $nodeExe = if ($node) { $node.Source } else { "$env:ProgramFiles\nodejs\node.exe" }
+  & $nodeExe node_modules/next/dist/bin/next build
+  if ($LASTEXITCODE -ne 0) { throw 'next build failed' }
+  Remove-Item Env:NODE_ENV
+
   Write-Host '==> Packing project'
-  tar -czf "$tmp\app.tgz" --exclude=node_modules --exclude=.next --exclude=data --exclude=.env --exclude=.git --exclude=.claude --exclude=*.tsbuildinfo .
+  tar -czf "$tmp\app.tgz" --exclude=node_modules --exclude=.next/cache --exclude=data --exclude=.env --exclude=.git --exclude=.claude --exclude=*.tsbuildinfo .
   if ($LASTEXITCODE -ne 0) { throw 'tar failed' }
 
   Write-Host "==> Uploading to $Server"

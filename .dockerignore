@@ -1,8 +1,9 @@
 node_modules
-.next
+.next/cache
 data
 .env
 .env.local
 *.tsbuildinfo
 coverage
 .git
+.claude

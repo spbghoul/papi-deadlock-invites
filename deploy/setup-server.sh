@@ -27,6 +27,7 @@ if command -v netfilter-persistent >/dev/null 2>&1; then netfilter-persistent sa
 
 echo "==> Unpacking app into $DIR"
 mkdir -p "$DIR"
+rm -rf "$DIR/.next"   # replaced by the freshly built one
 tar -xzf /tmp/app.tgz -C "$DIR"
 install -m 600 /tmp/app.env "$DIR/.env"
 rm -f /tmp/app.tgz /tmp/app.env
