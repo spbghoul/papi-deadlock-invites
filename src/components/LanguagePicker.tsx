@@ -1,8 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { LOCALE_COOKIE, LOCALE_NAMES, LOCALES, type Locale } from '@/lib/i18n';
+import { LOCALE_NAMES, LOCALES, type Locale } from '@/lib/i18n';
 
 // Simple inline SVG flags (emoji flags don't render on Windows).
 const FLAGS: Record<Locale, ReactNode> = {
@@ -100,10 +99,9 @@ function Flag({ locale }: { locale: Locale }) {
   );
 }
 
-export function LanguagePicker({ current, label }: { current: Locale; label: string }) {
+export function LanguagePicker({ current, label, onChange }: { current: Locale; label: string; onChange: (locale: Locale) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   useEffect(() => {
     if (!open) return;
@@ -120,9 +118,8 @@ export function LanguagePicker({ current, label }: { current: Locale; label: str
   }, [open]);
 
   const choose = (locale: Locale) => {
-    document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
     setOpen(false);
-    router.refresh();
+    if (locale !== current) onChange(locale);
   };
 
   return (
