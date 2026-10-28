@@ -24,8 +24,8 @@ export async function applyAdminOp(db: Db, id: number, op: AdminOp, now = new Da
   switch (op) {
     case 'retry':
       // needs_review: the admin confirms the previous attempt did NOT result in an invite.
-      from = ['failed', 'needs_review', 'expired', 'rejected'];
-      to = req.status === 'expired' ? 'waiting_friendship' : 'invite_pending';
+      from = ['failed', 'needs_review', 'expired', 'cancelled', 'rejected'];
+      to = req.status === 'expired' || req.status === 'cancelled' ? 'waiting_friendship' : 'invite_pending';
       Object.assign(patch, { next_attempt_at: iso(now), last_error: null, locked_at: null, attempts: 0 });
       message = `Request #${id} re-queued (${req.status} -> ${to}) by admin`;
       break;

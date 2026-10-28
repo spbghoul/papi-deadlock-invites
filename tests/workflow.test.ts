@@ -262,6 +262,40 @@ describe('invite workflow', () => {
     expect(steam.calls).toEqual([]);
   });
 
+  it('cancels a waiting request when its comment is deleted, and reopens it on a new comment', async () => {
+    const provider = new MockInviteProvider();
+    const { workflow, clock, steam, statusOf } = await setup(provider);
+    const c1 = comment('500', USER_A, 'thank you papi', clock.now());
+    const other = comment('400', USER_B, 'nice profile', clock.now());
+    await workflow.ingestComments([c1, other]);
+    expect(await statusOf(USER_A)).toBe('waiting_friendship');
+
+    // Still on the profile -> nothing happens.
+    expect(await workflow.cancelDeletedComments([c1, other], true)).toBe(0);
+    // Deleted (full comment list fetched) -> cancelled.
+    expect(await workflow.cancelDeletedComments([other], true)).toBe(1);
+    expect(await statusOf(USER_A)).toBe('cancelled');
+
+    // A friend request now must not be accepted.
+    steam.relationships.set(USER_A, FriendRelationship.RequestRecipient);
+    await workflow.handleFriendRelationship(USER_A, FriendRelationship.RequestRecipient);
+    expect(steam.calls).toEqual([]);
+
+    // Commenting again reopens the same request and the flow continues.
+    await workflow.ingestComments([comment('600', USER_A, 'thank you papi', clock.now())]);
+    expect(steam.calls).toContain(`accept:${USER_A}`);
+    await workflow.tick();
+    expect(provider.sent).toEqual([USER_A]);
+  });
+
+  it('does not cancel requests whose comment is older than the fetched window', async () => {
+    const { workflow, clock, statusOf } = await setup(new MockInviteProvider());
+    await workflow.ingestComments([comment('100', USER_A, 'thank you papi', clock.now())]);
+    // Partial fetch (complete=false) that only reaches back to comment 200: comment 100 may just be on a later page.
+    expect(await workflow.cancelDeletedComments([comment('200', USER_B, 'hi', clock.now())], false)).toBe(0);
+    expect(await statusOf(USER_A)).toBe('waiting_friendship');
+  });
+
   it('expires requests that never become friends', async () => {
     const { workflow, clock, statusOf } = await setup(new MockInviteProvider(), { friendshipWaitDays: 1 });
     await workflow.ingestComments([comment('97', USER_A, 'thank you papi', clock.now())]);

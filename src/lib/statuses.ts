@@ -9,6 +9,7 @@ export const REQUEST_STATUSES = [
   'failed', // terminal error
   'rejected', // rejected by admin or blocked
   'expired', // no friendship within FRIENDSHIP_WAIT_DAYS
+  'cancelled', // the user deleted their comment before becoming friends
 ] as const;
 
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
@@ -48,7 +49,9 @@ export function publicStatus(status: RequestStatus | null): { state: PublicState
     case 'rejected':
       return { state: 'Failed', detail: 'This request was not approved.' };
     case 'expired':
-      return { state: 'Failed', detail: 'No friend request was received in time. Contact the admin to retry.' };
+      return { state: 'Failed', detail: 'No friend request was received in time. Comment again to start over.' };
+    case 'cancelled':
+      return { state: 'Failed', detail: 'Your comment was deleted, so the request was cancelled. Comment again to start over.' };
     case 'failed':
       return { state: 'Failed', detail: 'The invitation could not be sent.' };
   }

@@ -78,17 +78,27 @@ export class SteamCommentSource {
     return parseCommentsHtml(json.comments_html);
   }
 
-  /** Newest-first pages until a page contains an already-known comment (max MAX_PAGES pages). */
-  async fetchRecent(profileSteamId: string, isKnown: (ids: string[]) => Promise<Set<string>>): Promise<ProfileComment[]> {
+  /**
+   * Newest-first pages until a page contains an already-known comment (max MAX_PAGES pages).
+   * `complete` is true when the last page was short, i.e. we saw every comment on the profile.
+   */
+  async fetchRecent(
+    profileSteamId: string,
+    isKnown: (ids: string[]) => Promise<Set<string>>,
+  ): Promise<{ comments: ProfileComment[]; complete: boolean }> {
     const all: ProfileComment[] = [];
+    let complete = false;
     for (let page = 0; page < MAX_PAGES; page++) {
       const comments = await this.fetchPage(profileSteamId, page * PAGE_SIZE);
       all.push(...comments);
-      if (comments.length < PAGE_SIZE) break;
+      if (comments.length < PAGE_SIZE) {
+        complete = true;
+        break;
+      }
       const known = await isKnown(comments.map((c) => c.id));
       if (known.size > 0) break;
     }
-    this.log.debug('Fetched profile comments', { count: all.length });
-    return all;
+    this.log.debug('Fetched profile comments', { count: all.length, complete });
+    return { comments: all, complete };
   }
 }

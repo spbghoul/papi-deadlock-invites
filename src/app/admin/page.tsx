@@ -30,6 +30,7 @@ const ACTIONS: Partial<Record<RequestStatus, { op: AdminOp; label: string; tone:
     { op: 'retry', label: 'Retry', tone: 'primary' },
     { op: 'reject', label: 'Reject', tone: 'blood' },
   ],
+  cancelled: [{ op: 'retry', label: 'Retry', tone: 'primary' }],
   rejected: [{ op: 'approve', label: 'Approve', tone: 'primary' }],
 };
 
@@ -44,6 +45,7 @@ const STATUS_COLOR: Record<RequestStatus, string> = {
   failed: 'bg-red-500/15 text-red-300',
   rejected: 'bg-zinc-500/20 text-zinc-300',
   expired: 'bg-zinc-500/15 text-zinc-400',
+  cancelled: 'bg-zinc-500/15 text-zinc-400',
 };
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'medium' }) : '—');

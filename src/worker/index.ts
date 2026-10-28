@@ -125,8 +125,9 @@ async function main() {
     try {
       const paused = (await getRuntimeSettings(db, cfg.REMOVAL_DELAY_SECONDS)).paused;
       if (steam.isLoggedOn() && botSteamId && !paused) {
-        const list = await comments.fetchRecent(botSteamId, (ids) => workflow.knownCommentIds(ids));
+        const { comments: list, complete } = await comments.fetchRecent(botSteamId, (ids) => workflow.knownCommentIds(ids));
         const created = await workflow.ingestComments(list);
+        await workflow.cancelDeletedComments(list, complete);
         lastPollAt = iso(new Date());
         if (created) log.info('New invite requests from comments', { created });
       }

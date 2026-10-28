@@ -149,7 +149,30 @@ export class InviteWorkflow {
         })
         .onConflict((oc) => oc.column('steam_id').doNothing())
         .executeTakeFirst();
-      return Number(inserted.numInsertedOrUpdatedRows ?? 0n) === 1 ? ('created' as const) : ('duplicate' as const);
+      if (Number(inserted.numInsertedOrUpdatedRows ?? 0n) === 1) return 'created' as const;
+
+      // One request per account, but a cancelled/expired one (nothing was ever sent) can start over.
+      const reopened = await trx
+        .updateTable('invite_requests')
+        .set({
+          comment_id: c.id,
+          comment_text: c.text.slice(0, 200),
+          status: 'waiting_friendship',
+          attempts: 0,
+          last_error: null,
+          friend_since: null,
+          friend_request_sent_at: null,
+          next_attempt_at: null,
+          updated_at: iso(now),
+        })
+        .where('steam_id', '=', c.authorSteamId)
+        .where('status', 'in', ['cancelled', 'expired'])
+        .executeTakeFirst();
+      if (Number(reopened.numUpdatedRows) === 1) {
+        await trx.updateTable('users').set({ status: 'waiting_friendship' }).where('steam_id', '=', c.authorSteamId).execute();
+        return 'reopened' as const;
+      }
+      return 'duplicate' as const;
     });
 
     switch (outcome) {
@@ -160,12 +183,37 @@ export class InviteWorkflow {
         await this.event('duplicate_comment', c.authorSteamId, `Comment ${c.id} ignored: this SteamID already has a request`);
         return false;
       case 'created':
-        await this.event('comment_verified', c.authorSteamId, `Verified comment ${c.id}`);
+      case 'reopened':
+        await this.event('comment_verified', c.authorSteamId, `Verified comment ${c.id}${outcome === 'reopened' ? ' (request reopened)' : ''}`);
         await this.syncFriendship(c.authorSteamId);
         return true;
       default:
         return false;
     }
+  }
+
+  /**
+   * Cancels requests still waiting for friendship whose comment is gone from the profile.
+   * A comment counts as deleted only if it would have been inside the fetched window:
+   * either we saw every comment (`complete`) or it is newer than the oldest fetched one.
+   */
+  async cancelDeletedComments(fetched: ProfileComment[], complete: boolean): Promise<number> {
+    const present = new Set(fetched.map((c) => c.id));
+    const numericIds = fetched.map((c) => c.id).filter((id) => /^\d+$/.test(id)).map((id) => BigInt(id));
+    const oldest = numericIds.length ? numericIds.reduce((a, b) => (b < a ? b : a)) : null;
+
+    const waiting = await this.db.selectFrom('invite_requests').select(['id', 'steam_id', 'comment_id']).where('status', '=', 'waiting_friendship').execute();
+    let cancelled = 0;
+    for (const r of waiting) {
+      if (present.has(r.comment_id) || !/^\d+$/.test(r.comment_id)) continue;
+      const inWindow = complete || (oldest !== null && BigInt(r.comment_id) > oldest);
+      if (!inWindow) continue;
+      if (await transition(this.db, r.id, 'waiting_friendship', { status: 'cancelled', last_error: 'Comment was deleted' }, this.now())) {
+        await this.event('comment_deleted', r.steam_id, `Comment ${r.comment_id} was deleted before friendship; request cancelled`);
+        cancelled++;
+      }
+    }
+    return cancelled;
   }
 
   private async friendBudgetLeft(): Promise<number> {
