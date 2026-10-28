@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { getLocale } from '@/lib/locale';
 import './globals.css';
 
 const title = "Papi's Deadlock Invites";
@@ -17,9 +18,10 @@ export const viewport: Viewport = {
   themeColor: '#171a21',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className="min-h-dvh font-sans antialiased selection:bg-accent-500/40">{children}</body>
     </html>
   );

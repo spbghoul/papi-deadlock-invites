@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
     const pub = publicStatus(request?.status ?? null);
     return NextResponse.json({
       steamId,
+      code: request?.status ?? null,
       state: pub.state,
       detail: pub.detail,
       updatedAt: request?.updated_at ?? null,

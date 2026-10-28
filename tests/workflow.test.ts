@@ -296,6 +296,17 @@ describe('invite workflow', () => {
     expect(await statusOf(USER_A)).toBe('waiting_friendship');
   });
 
+  it('accepts the phrase in every site language', async () => {
+    const { workflow, clock, statusOf } = await setup(new MockInviteProvider());
+    const ids = ['76561198000000101', '76561198000000102', '76561198000000103', '76561198000000104', '76561198000000105'];
+    const texts = ['Спасибо Папи', 'dziękuję papi!', '谢谢爸爸', 'ありがとうパピ', '고마워 파피'];
+    await workflow.ingestComments(texts.map((t, i) => comment(String(700 + i), ids[i]!, t, clock.now())));
+    for (const id of ids) expect(await statusOf(id)).toBe('waiting_friendship');
+    // Wrong language mix or extra words still don't count.
+    await workflow.ingestComments([comment('800', '76561198000000106', 'спасибо папи и мама', clock.now())]);
+    expect(await statusOf('76561198000000106')).toBeUndefined();
+  });
+
   it('expires requests that never become friends', async () => {
     const { workflow, clock, statusOf } = await setup(new MockInviteProvider(), { friendshipWaitDays: 1 });
     await workflow.ingestComments([comment('97', USER_A, 'thank you papi', clock.now())]);

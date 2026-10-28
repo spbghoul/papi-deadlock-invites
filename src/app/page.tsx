@@ -1,52 +1,22 @@
 import { CopyPhrase } from '@/components/CopyPhrase';
+import { LanguagePicker } from '@/components/LanguagePicker';
 import { LiveStats } from '@/components/LiveStats';
 import { StatusChecker } from '@/components/StatusChecker';
 import { getConfig } from '@/lib/config';
 import { getDb } from '@/lib/db/client';
+import { DICTS, phraseFor } from '@/lib/i18n';
+import { getLocale } from '@/lib/locale';
 import { getStatsPayload, type StatsPayload } from '@/lib/publicData';
 import { getProfileSummary } from '@/lib/steamProfile';
 
 export const dynamic = 'force-dynamic';
 
-const faq = (phrase: string, sourceUrl: string | undefined) => [
-  {
-    q: 'What do I need to get an invite?',
-    a: "A Steam account that isn't limited (Valve requires accounts that have spent at least $5), a profile that allows comments, and a free slot in your friends list. One invite per Steam account.",
-  },
-  {
-    q: 'How long does it take?',
-    a: 'Comments are checked roughly every minute. Once you are friends with Papi the invite is queued immediately, but Valve may require you to be friends for a while before an invite is allowed — the bot simply retries later. Invites are also rate-limited to protect the bot account.',
-  },
-  {
-    q: 'My comment does not count?',
-    a: `The comment must be exactly "${phrase}" (any capitalization, extra spaces are fine). Comments with extra words are ignored. Only one comment per account is processed.`,
-  },
-  {
-    q: 'Where is my invite?',
-    a: 'Deadlock playtest invites show up as a Steam notification and on steamcommunity.com/my/playtestinvites. Steam sometimes delays the notification — check that page directly. A sent invite does not guarantee Steam delivers it instantly.',
-  },
-  {
-    q: 'Why did Papi remove me from friends?',
-    a: 'After your invite is confirmed, Papi removes you to keep the friends list free for the next person. Nothing personal.',
-  },
-  {
-    q: 'My status says Failed.',
-    a: 'Common reasons: you already have Deadlock, your account is limited, you never sent a friend request in time, or the request was rejected. The status details explain which one.',
-  },
-  {
-    q: 'Is this official?',
-    a: 'No. This is an independent community project. Invites are free — never pay anyone for a Deadlock invite and never click "invite links" sent to you in DMs.',
-  },
-  {
-    q: 'What data do you store? Is the code public?',
-    a: `Only your SteamID64, public profile URL and name, the comment ID, and the status of your request — enough to send one invite and not send it twice. Papi never needs your password or Steam Guard code: if anyone asks for them, it's a scam. ${
-      sourceUrl ? `The full source code is open (MIT license): ${sourceUrl}` : 'The source code will be published openly under the MIT license.'
-    }`,
-  },
-];
-
 export default async function Home() {
   const cfg = getConfig();
+  const locale = await getLocale();
+  const t = DICTS[locale];
+  const phrase = phraseFor(locale, cfg.COMMENT_PHRASE);
+
   let initialStats: StatsPayload | null = null;
   try {
     initialStats = await getStatsPayload(await getDb());
@@ -59,17 +29,17 @@ export default async function Home() {
 
   const steps = [
     {
-      title: "Open Papi's Steam profile",
+      title: t.steps.openProfile,
       body: (
         <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="inline-block py-1.5">
           {profileUrl.replace(/^https:\/\//, '')}
         </a>
       ),
     },
-    { title: 'Leave the comment', body: <CopyPhrase phrase={cfg.COMMENT_PHRASE} /> },
-    { title: 'Send Papi a friend request', body: <span>Click “Add Friend” on the profile. It is accepted automatically once your comment is verified.</span> },
-    { title: 'Receive your Deadlock invitation', body: <span>Papi invites you as soon as Steam allows it. Track progress in Request status below.</span> },
-    { title: 'Enjoy Deadlock!', body: <span>Accept the invite from your Steam notifications and install the game.</span> },
+    { title: t.steps.leaveComment, body: <CopyPhrase phrase={phrase} copyLabel={t.copy} copiedLabel={t.copied} /> },
+    { title: t.steps.addFriend, body: <span>{t.steps.addFriendBody}</span> },
+    { title: t.steps.receive, body: <span>{t.steps.receiveBody}</span> },
+    { title: t.steps.enjoy, body: <span>{t.steps.enjoyBody}</span> },
   ];
 
   return (
@@ -82,29 +52,32 @@ export default async function Home() {
             <img src="/icon.png" alt="" width={28} height={28} className="size-7 rounded-full ring-1 ring-[#3a8fc4]" />
             <span className="text-[15px] font-bold uppercase tracking-wide">Papi&rsquo;s Deadlock Invites</span>
           </a>
-          <nav className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] uppercase tracking-wide">
-            {[
-              ['#how-it-works', 'How it works'],
-              ['#stats', 'Stats'],
-              ['#status', 'Status'],
-              ['#faq', 'FAQ'],
-            ].map(([href, label]) => (
-              <a key={href} href={href} className="py-2 text-[#b8b6b4] no-underline hover:text-white sm:py-0">
-                {label}
-              </a>
-            ))}
-          </nav>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <nav className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] uppercase tracking-wide">
+              {[
+                ['#how-it-works', t.nav.how],
+                ['#stats', t.nav.stats],
+                ['#status', t.nav.status],
+                ['#faq', t.nav.faq],
+              ].map(([href, label]) => (
+                <a key={href} href={href} className="py-2 text-[#b8b6b4] no-underline hover:text-white sm:py-0">
+                  {label}
+                </a>
+              ))}
+            </nav>
+            <LanguagePicker current={locale} label={t.language} />
+          </div>
         </div>
       </header>
 
       <main className="mx-auto site-col max-w-[1100px] px-4 pb-16">
         {/* Breadcrumb + title, like a store app page */}
         <div className="pt-6 text-xs text-ink-400">
-          All Games &gt; Action Games &gt; <span className="text-accent-500">Deadlock</span> &gt; Invites
+          {t.breadcrumb.all} &gt; {t.breadcrumb.action} &gt; <span className="text-accent-500">Deadlock</span> &gt; {t.breadcrumb.invites}
         </div>
         <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
           <h1 className="text-[26px] font-normal leading-tight text-white">Papi&rsquo;s Deadlock Invites</h1>
-          <span className="pb-1 text-sm text-ink-300">Want to play Deadlock? Papi&rsquo;s got you.</span>
+          <span className="pb-1 text-sm text-ink-300">{t.tagline}</span>
         </div>
 
         {/* App header: capsule + info box */}
@@ -120,15 +93,13 @@ export default async function Home() {
               height={210}
               className="pointer-events-none absolute -right-2 bottom-0 hidden w-[42%] max-w-[300px] opacity-90 mix-blend-screen invert [mask-image:linear-gradient(to_right,transparent,black_22%)] sm:block"
             />
-            <p className="relative text-xs uppercase tracking-[0.3em] text-ink-400">Playtest access</p>
+            <p className="relative text-xs uppercase tracking-[0.3em] text-ink-400">{t.playtestAccess}</p>
             <p className="relative mt-3 text-4xl font-bold uppercase leading-none tracking-tight text-white sm:text-5xl">Deadlock</p>
-            <p className="relative mt-3 max-w-md text-[15px] leading-relaxed text-bone sm:max-w-[58%]">
-              Deadlock is still invite-only. Leave one comment, add Papi as a friend, and the bot sends you a playtest invite — free, automatic, no strings.
-            </p>
+            <p className="relative mt-3 max-w-md text-[15px] leading-relaxed text-bone sm:max-w-[58%]">{t.heroText}</p>
             <ul className="relative mt-5 flex flex-wrap gap-1.5 text-xs sm:max-w-[58%]">
-              {['Free', 'Automatic', '1 invite per account', 'Community project'].map((t) => (
-                <li key={t} className="rounded-sm bg-[rgba(103,193,245,0.2)] px-2 py-1 text-accent-500">
-                  {t}
+              {t.chips.map((c) => (
+                <li key={c} className="rounded-sm bg-[rgba(103,193,245,0.2)] px-2 py-1 text-accent-500">
+                  {c}
                 </li>
               ))}
             </ul>
@@ -144,38 +115,38 @@ export default async function Home() {
               )}
               <div className="min-w-0">
                 <div className="truncate text-lg text-white">{bot.name ?? 'Papi'}</div>
-                <div className={online ? 'text-online' : 'text-ink-400'}>{online ? 'Online' : 'Offline'}</div>
+                <div className={online ? 'text-online' : 'text-ink-400'}>{online ? t.online : t.offline}</div>
               </div>
             </a>
             <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
-              <dt className="uppercase text-ink-400">Comment</dt>
-              <dd className="text-accent-500">&ldquo;{cfg.COMMENT_PHRASE}&rdquo;</dd>
-              <dt className="uppercase text-ink-400">Price</dt>
-              <dd className="text-bone">Free</dd>
-              <dt className="uppercase text-ink-400">Sent</dt>
+              <dt className="uppercase text-ink-400">{t.comment}</dt>
+              <dd className="text-accent-500">&ldquo;{phrase}&rdquo;</dd>
+              <dt className="uppercase text-ink-400">{t.price}</dt>
+              <dd className="text-bone">{t.free}</dd>
+              <dt className="uppercase text-ink-400">{t.sent}</dt>
               <dd className="text-bone">{initialStats ? initialStats.invitesSent.toLocaleString('en-US') : '—'}</dd>
             </dl>
             <a href={profileUrl} target="_blank" rel="noopener noreferrer" className="btn-blue mt-4 w-full">
-              View Steam profile
+              {t.viewProfile}
             </a>
           </aside>
         </section>
 
         {/* Purchase area */}
         <section className="purchase-area relative mt-6 px-4 pb-10 pt-4 sm:px-5">
-          <h2 className="text-[21px] text-white">Get Deadlock Playtest Invite</h2>
-          <p className="mt-1 text-[13px] text-bone">Comment &ldquo;{cfg.COMMENT_PHRASE}&rdquo; on Papi&rsquo;s profile, then add Papi as a friend.</p>
+          <h2 className="text-[21px] text-white">{t.purchaseTitle}</h2>
+          <p className="mt-1 text-[13px] text-bone">{t.purchaseText(phrase)}</p>
           <div className="absolute -bottom-4 right-4 flex items-stretch rounded-sm bg-black p-0.5 sm:right-5">
-            <span className="flex items-center px-3 text-[13px] text-bone">Free</span>
+            <span className="flex items-center px-3 text-[13px] text-bone">{t.free}</span>
             <a href="#how-it-works" className="btn-green">
-              Get your invite
+              {t.getInvite}
             </a>
           </div>
         </section>
 
         {/* How it works */}
         <section id="how-it-works" className="mt-14 scroll-mt-6">
-          <h2 className="block-header">How it works</h2>
+          <h2 className="block-header">{t.howItWorks}</h2>
           <ol className="zebra mt-3 overflow-hidden rounded-sm">
             {steps.map((s, i) => (
               <li key={s.title} className="flex gap-4 px-4 py-3.5">
@@ -192,26 +163,26 @@ export default async function Home() {
         <div className="mt-12 grid gap-10 md:grid-cols-[1fr_1fr]">
           {/* Stats */}
           <section id="stats" className="scroll-mt-6">
-            <h2 className="block-header">Live statistics</h2>
+            <h2 className="block-header">{t.liveStats}</h2>
             <div className="mt-3">
-              <LiveStats initial={initialStats} />
+              <LiveStats initial={initialStats} t={t.stats} online={t.online} offline={t.offline} />
             </div>
           </section>
 
           {/* Status */}
           <section id="status" className="scroll-mt-6">
-            <h2 className="block-header">Request status</h2>
+            <h2 className="block-header">{t.requestStatus}</h2>
             <div className="mt-3">
-              <StatusChecker />
+              <StatusChecker t={t.status} dateLocale={locale} />
             </div>
           </section>
         </div>
 
         {/* FAQ */}
         <section id="faq" className="mt-12 scroll-mt-6">
-          <h2 className="block-header">Frequently asked questions</h2>
+          <h2 className="block-header">{t.faqTitle}</h2>
           <div className="zebra mt-3 overflow-hidden rounded-sm">
-            {faq(cfg.COMMENT_PHRASE, cfg.SOURCE_CODE_URL).map((f) => (
+            {t.faq(phrase, cfg.SOURCE_CODE_URL).map((f) => (
               <details key={f.q} className="group px-4 py-3">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] text-accent-500 hover:text-white">
                   {f.q}
@@ -226,12 +197,12 @@ export default async function Home() {
 
       <footer className="bg-ink-900 py-8 text-[12px] text-ink-400">
         <div className="mx-auto site-col max-w-[1100px] border-t border-ink-700 px-4 pt-5">
-          <p>Papi&rsquo;s Deadlock Invites is an independent community project. It is not affiliated with, endorsed by, or sponsored by Valve Corporation.</p>
-          <p className="mt-1">Deadlock, Steam and the Steam logo are trademarks of Valve Corporation.</p>
+          <p>{t.footerIndependent}</p>
+          <p className="mt-1">{t.footerTrademarks}</p>
           {cfg.SOURCE_CODE_URL && (
             <p className="mt-3">
               <a href={cfg.SOURCE_CODE_URL} target="_blank" rel="noopener noreferrer" className="inline-block py-1.5">
-                Source code on GitHub
+                {t.sourceCode}
               </a>{' '}
               · MIT license
             </p>

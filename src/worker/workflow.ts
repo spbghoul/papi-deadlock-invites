@@ -17,7 +17,8 @@ import { backoffMs, withTimeout } from './backoff';
 import { FriendRelationship, type ProfileComment, type SteamGateway } from './gateway';
 
 export interface WorkflowConfig {
-  phrase: string;
+  /** Accepted comment phrases (one per site language). */
+  phrases: string[];
   botSteamId: string | null;
   commentMaxAgeHours: number;
   friendshipWaitDays: number;
@@ -110,7 +111,7 @@ export class InviteWorkflow {
     const matched =
       validId &&
       c.authorSteamId !== this.cfg.botSteamId &&
-      matchesPhrase(c.text, this.cfg.phrase) &&
+      this.cfg.phrases.some((p) => matchesPhrase(c.text, p)) &&
       (!c.postedAt || now.getTime() - c.postedAt.getTime() <= this.cfg.commentMaxAgeHours * HOUR);
 
     const blocked = matched && (await isBlocked(this.db, c.authorSteamId));

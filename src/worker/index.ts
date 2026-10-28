@@ -2,6 +2,7 @@ import http from 'node:http';
 import { getConfig, loadDotEnv } from '../lib/config';
 import { createDb, dialectOf } from '../lib/db';
 import { migrateToLatest } from '../lib/db/migrations';
+import { acceptedPhrases } from '../lib/i18n';
 import { createLogger, errorMessage } from '../lib/logger';
 import { getRuntimeSettings, getWorkerStatus, iso, logEvent, upsertWorkerStatus } from '../lib/repo';
 import { DeadlockGcInviteProvider } from '../providers/gcProvider';
@@ -60,7 +61,7 @@ async function main() {
     provider,
     log: log.child({ mod: 'workflow' }),
     config: {
-      phrase: cfg.COMMENT_PHRASE,
+      phrases: acceptedPhrases(cfg.COMMENT_PHRASE),
       get botSteamId() {
         return botSteamId;
       },

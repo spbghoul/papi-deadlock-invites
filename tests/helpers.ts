@@ -1,4 +1,5 @@
 import { createDb } from '../src/lib/db';
+import { acceptedPhrases } from '../src/lib/i18n';
 import { migrateToLatest } from '../src/lib/db/migrations';
 import { silentLogger } from '../src/lib/logger';
 import type { DeadlockInviteProvider } from '../src/providers/types';
@@ -54,7 +55,7 @@ export async function setup(provider: DeadlockInviteProvider, overrides: Partial
   const steam = new FakeSteam();
   const clock = new Clock();
   const config: WorkflowConfig = {
-    phrase: 'thank you papi',
+    phrases: acceptedPhrases('thank you papi'),
     botSteamId: BOT,
     commentMaxAgeHours: 72,
     friendshipWaitDays: 7,
