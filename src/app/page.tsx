@@ -11,6 +11,19 @@ import { getProfileSummary } from '@/lib/steamProfile';
 
 export const dynamic = 'force-dynamic';
 
+/** Turns https:// URLs inside translated text into links. */
+function linkify(text: string) {
+  return text.split(/(https:\/\/[^\s)]+)/g).map((part, i) =>
+    part.startsWith('https://') ? (
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer">
+        {part.replace(/^https:\/\//, '')}
+      </a>
+    ) : (
+      part
+    ),
+  );
+}
+
 export default async function Home() {
   const cfg = getConfig();
   const locale = await getLocale();
@@ -188,7 +201,7 @@ export default async function Home() {
                   {f.q}
                   <span aria-hidden className="text-ink-400 transition group-open:rotate-90">&#9656;</span>
                 </summary>
-                <p className="mt-2 text-[13px] leading-relaxed text-ink-300">{f.a}</p>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-300">{linkify(f.a)}</p>
               </details>
             ))}
           </div>
